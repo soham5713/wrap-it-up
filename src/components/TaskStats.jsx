@@ -23,7 +23,13 @@ const TaskStats = ({ tasks }) => {
 
   return (
     <div className="rounded-lg border bg-card p-6 shadow-sm">
-      <h3 className="mb-4 font-semibold text-lg">Task Progress</h3>
+      <h3 className="mb-4 font-semibold text-lg flex items-center gap-2">
+        <div className="rounded-full bg-primary/10 p-1">
+          <CheckCircle2 className="h-4 w-4 text-primary" />
+        </div>
+        Task Progress
+      </h3>
+
       <div className="mb-6 space-y-2">
         <div className="flex justify-between text-sm">
           <span>
@@ -36,8 +42,8 @@ const TaskStats = ({ tasks }) => {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center rounded-md border bg-card/60 p-4 transition-colors hover:bg-accent/20">
-          <div className="mr-3 rounded-full bg-error/20 p-2">
-            <AlertCircle className="h-5 w-5 text-error/90" />
+          <div className="mr-3 rounded-full p-2">
+            <AlertCircle className="h-5 w-5" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Overdue</p>
@@ -47,7 +53,7 @@ const TaskStats = ({ tasks }) => {
 
         <div className="flex items-center rounded-md border bg-card/60 p-4 transition-colors hover:bg-accent/20">
           <div className="mr-3 rounded-full bg-warning/20 p-2">
-            <Clock className="h-5 w-5 text-warning/90" />
+            <Clock className="h-5 w-5 text-warning" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Due soon</p>
@@ -57,7 +63,7 @@ const TaskStats = ({ tasks }) => {
 
         <div className="flex items-center rounded-md border bg-card/60 p-4 transition-colors hover:bg-accent/20">
           <div className="mr-3 rounded-full bg-success/20 p-2">
-            <CheckCircle2 className="h-5 w-5 text-success/90" />
+            <CheckCircle2 className="h-5 w-5 text-success" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">High priority</p>

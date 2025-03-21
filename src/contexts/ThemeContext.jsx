@@ -9,15 +9,20 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
+  // Set dark as the default theme
+  const [theme, setTheme] = useState("dark")
+
+  useEffect(() => {
     // Check if theme is stored in localStorage
     const savedTheme = localStorage.getItem("theme")
-    // Check user's system preference if no saved theme
-    if (!savedTheme) {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+    if (savedTheme) {
+      setTheme(savedTheme)
+    } else {
+      // Default to dark theme
+      setTheme("dark")
+      localStorage.setItem("theme", "dark")
     }
-    return savedTheme
-  })
+  }, [])
 
   useEffect(() => {
     // Update localStorage when theme changes
@@ -47,6 +52,11 @@ export function ThemeProvider({ children }) {
     }
   }, [theme])
 
-  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>
+  // Add a simple toggle function
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "dark" ? "light" : "dark"))
+  }
+
+  return <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>{children}</ThemeContext.Provider>
 }
 

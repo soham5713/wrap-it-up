@@ -5,6 +5,9 @@ import App from "./App.jsx"
 import { AuthProvider } from "./contexts/AuthContext"
 import { ThemeProvider } from "./contexts/ThemeContext"
 
+// Apply dark theme immediately
+document.documentElement.classList.add("dark")
+
 // Wait for DOM to be ready
 document.addEventListener("DOMContentLoaded", () => {
   const rootElement = document.getElementById("root")

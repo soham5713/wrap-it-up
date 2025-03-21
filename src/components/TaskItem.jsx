@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar, Clock, Trash, Edit, X, AlertCircle, Save } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { format } from "date-fns"
+import { format, isValid } from "date-fns" // Import isValid to check date validity
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -19,6 +19,22 @@ const TaskItem = ({ task, onToggleComplete, onDelete, onUpdate }) => {
   const [editedDueDate, setEditedDueDate] = useState(task.dueDate ? new Date(task.dueDate) : null)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Helper function to safely format dates
+  const formatDate = (dateString) => {
+    if (!dateString) return null
+
+    const date = new Date(dateString)
+    return isValid(date) ? format(date, "PP") : "Invalid date"
+  }
+
+  // Check if a date is overdue
+  const isOverdue = () => {
+    if (!task.dueDate || task.completed) return false
+
+    const dueDate = new Date(task.dueDate)
+    return isValid(dueDate) && dueDate < new Date()
+  }
 
   const handleSave = async () => {
     if (!editedText.trim() || isSaving) return
@@ -47,22 +63,22 @@ const TaskItem = ({ task, onToggleComplete, onDelete, onUpdate }) => {
     setIsEditing(false)
   }
 
-  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.completed
-
+  // Update the priorityClasses to use more visually distinct colors
   const priorityClasses = {
-    high: "priority-high",
-    medium: "priority-medium",
-    low: "priority-low",
+    high: "bg-destructive/10 border-destructive/30 hover:bg-destructive/20",
+    medium: "bg-warning/10 border-warning/30 hover:bg-warning/20",
+    low: "bg-success/10 border-success/30 hover:bg-success/20",
   }
 
+  // Update the component return to use the new priority classes
   return (
     <div
       className={`group relative rounded-lg border p-4 transition-all hover:shadow-md ${
         task.completed
           ? "bg-muted/30 border-muted/50"
-          : isOverdue
-            ? "bg-error/10 border-error/30"
-            : "bg-card hover:bg-accent/20"
+          : isOverdue()
+            ? "bg-destructive/10 border-destructive/30 hover:bg-destructive/20"
+            : `${priorityClasses[task.priority] || "bg-card hover:bg-accent/20"}`
       }`}
     >
       {isEditing ? (
@@ -104,7 +120,7 @@ const TaskItem = ({ task, onToggleComplete, onDelete, onUpdate }) => {
               <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8 text-sm">
-                    {editedDueDate ? format(editedDueDate, "PP") : "Set date"}
+                    {editedDueDate && isValid(editedDueDate) ? format(editedDueDate, "PP") : "Set date"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -178,7 +194,7 @@ const TaskItem = ({ task, onToggleComplete, onDelete, onUpdate }) => {
                 checked={task.completed}
                 onCheckedChange={() => onToggleComplete(task.id, task.completed)}
                 id={`task-${task.id}`}
-                className="mt-1"
+                className={`mt-1 ${task.completed ? "" : task.priority === "high" ? "text-destructive border-destructive" : task.priority === "medium" ? "text-warning border-warning" : "text-success border-success"}`}
               />
               <div className="space-y-1.5">
                 <label
@@ -198,7 +214,19 @@ const TaskItem = ({ task, onToggleComplete, onDelete, onUpdate }) => {
 
                 <div className="flex flex-wrap items-center gap-2 pt-1.5">
                   {task.priority && (
-                    <Badge variant="outline" className={priorityClasses[task.priority]}>
+                    <Badge
+                      variant="outline"
+                      className={`
+                        ${
+                          task.priority === "high"
+                            ? "border-destructive/50 text-destructive bg-destructive/10"
+                            : task.priority === "medium"
+                              ? "border-warning/50 text-warning bg-warning/10"
+                              : "border-success/50 text-success bg-success/10"
+                        }
+                        ${task.completed ? "opacity-50" : ""}
+                      `}
+                    >
                       {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                     </Badge>
                   )}
@@ -206,17 +234,17 @@ const TaskItem = ({ task, onToggleComplete, onDelete, onUpdate }) => {
                   {task.dueDate && (
                     <div className="flex items-center text-xs text-muted-foreground">
                       <Calendar className="mr-1 h-3.5 w-3.5" />
-                      <span className={isOverdue && !task.completed ? "text-error font-medium" : ""}>
-                        {format(new Date(task.dueDate), "PP")}
+                      <span className={isOverdue() && !task.completed ? "text-destructive font-medium" : ""}>
+                        {formatDate(task.dueDate)}
                       </span>
-                      {isOverdue && !task.completed && <AlertCircle className="ml-1 h-3.5 w-3.5 text-error" />}
+                      {isOverdue() && !task.completed && <AlertCircle className="ml-1 h-3.5 w-3.5 text-destructive" />}
                     </div>
                   )}
 
                   {task.createdAt && (
                     <div className="flex items-center text-xs text-muted-foreground">
                       <Clock className="mr-1 h-3.5 w-3.5" />
-                      <span>Added {format(new Date(task.createdAt), "PP")}</span>
+                      <span>Added {formatDate(task.createdAt)}</span>
                     </div>
                   )}
                 </div>

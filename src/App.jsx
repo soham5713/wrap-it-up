@@ -17,7 +17,6 @@ import { useTheme } from "./contexts/ThemeContext"
 import Login from "./components/Login"
 import ThemeToggle from "./components/ThemeToggle"
 import TaskItem from "./components/TaskItem"
-import TaskFilters from "./components/TaskFilters"
 import EmptyState from "./components/EmptyState"
 import UserProfile from "./components/UserProfile"
 import TaskStats from "./components/TaskStats"
@@ -61,11 +60,8 @@ const App = () => {
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Filters and sorting state
+  // Simplified filter state
   const [filter, setFilter] = useState("all")
-  const [sortBy, setSortBy] = useState("newest")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [priorityFilter, setPriorityFilter] = useState("all")
 
   // Stats
   const totalTasks = tasks.length
@@ -110,7 +106,7 @@ const App = () => {
   }, [currentUser])
 
   useEffect(() => {
-    // Apply filters and sorting
+    // Apply simplified filtering
     let result = [...tasks]
 
     // Filter by status
@@ -120,65 +116,11 @@ const App = () => {
       result = result.filter((task) => task.completed)
     }
 
-    // Filter by priority
-    if (priorityFilter !== "all") {
-      result = result.filter((task) => task.priority === priorityFilter)
-    }
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(
-        (task) => task.text.toLowerCase().includes(query) || (task.notes && task.notes.toLowerCase().includes(query)),
-      )
-    }
-
-    // Sort tasks
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return new Date(b.createdAt) - new Date(a.createdAt)
-        case "oldest":
-          return new Date(a.createdAt) - new Date(b.createdAt)
-        case "dueDate":
-          // Sort null due dates to the end
-          if (!a.dueDate) return 1
-          if (!b.dueDate) return -1
-          return new Date(a.dueDate) - new Date(b.dueDate)
-        case "priority":
-          const priorityOrder = { high: 0, medium: 1, low: 2 }
-          return priorityOrder[a.priority || "medium"] - priorityOrder[b.priority || "medium"]
-        case "alphabetical":
-          return a.text.localeCompare(b.text)
-        default:
-          return 0
-      }
-    })
+    // Sort tasks by newest first
+    result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
     setFilteredTasks(result)
-  }, [tasks, filter, sortBy, searchQuery, priorityFilter])
-
-  // We'll comment out this effect for now until the Firestore rules are updated
-  /*
-  useEffect(() => {
-    const loadUserSettings = async () => {
-      if (currentUser) {
-        try {
-          const settings = await getUserSettings(currentUser.uid)
-          if (settings) {
-            // Apply user settings
-            setFilter(settings.defaultView)
-            setNewTaskPriority(settings.defaultPriority)
-          }
-        } catch (error) {
-          console.error("Error loading user settings", error)
-        }
-      }
-    }
-    
-    loadUserSettings()
-  }, [currentUser])
-  */
+  }, [tasks, filter])
 
   const addTask = async (e) => {
     e?.preventDefault()
@@ -320,36 +262,36 @@ const App = () => {
       </header>
 
       <main className="container mx-auto py-8 px-4 md:px-6 max-w-5xl">
-        {indexError && (
-          <div className="mb-8 p-4 border border-warning/30 bg-warning/5 dark:bg-warning/10 dark:border-warning/20 rounded-lg flex flex-col md:flex-row items-start md:items-center gap-4">
-            <AlertTriangle className="h-6 w-6 text-warning flex-shrink-0" />
-            <div className="flex-1">
-              <h3 className="font-medium text-foreground">Firestore Index Required</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Your tasks are loaded but for optimal performance, you need to create an index in Firestore.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              className="bg-warning/10 hover:bg-warning/20 text-foreground border-warning/30 dark:bg-warning/20 dark:hover:bg-warning/30"
-              onClick={() => window.open(indexUrl, "_blank")}
-            >
-              Create Index
-            </Button>
-          </div>
-        )}
-
         <div className="space-y-8">
+          {indexError && (
+            <div className="mb-8 p-4 border border-warning/30 bg-warning/5 dark:bg-warning/10 dark:border-warning/20 rounded-lg flex flex-col md:flex-row items-start md:items-center gap-4">
+              <AlertTriangle className="h-6 w-6 text-warning flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-medium text-foreground">Firestore Index Required</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your tasks are loaded but for optimal performance, you need to create an index in Firestore.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="bg-warning/10 hover:bg-warning/20 text-foreground border-warning/30 dark:bg-warning/20 dark:hover:bg-warning/30"
+                onClick={() => window.open(indexUrl, "_blank")}
+              >
+                Create Index
+              </Button>
+            </div>
+          )}
+
           <Card className="border shadow-sm overflow-hidden">
             <form onSubmit={addTask}>
-              <CardHeader className="pb-3 bg-muted/30">
+              <CardHeader className="pb-3">
                 <CardTitle className="text-xl flex items-center gap-2">
                   <Plus className="h-5 w-5 text-primary" />
                   Add New Task
                 </CardTitle>
                 <CardDescription>Create a new task with details</CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="py-6">
                 <div className="grid gap-4">
                   <div className="grid gap-2">
                     <Input
@@ -409,7 +351,7 @@ const App = () => {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between border-t bg-muted/10 py-4">
+              <CardFooter className="flex justify-between border-t">
                 <Button
                   variant="outline"
                   type="button"
@@ -506,19 +448,6 @@ const App = () => {
                   </TabsList>
                 </Tabs>
               </div>
-
-              <div className="mt-4">
-                <TaskFilters
-                  filter={filter}
-                  setFilter={setFilter}
-                  sortBy={sortBy}
-                  setSortBy={setSortBy}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  priorityFilter={priorityFilter}
-                  setPriorityFilter={setPriorityFilter}
-                />
-              </div>
             </CardHeader>
             <CardContent className="pt-2">
               {loading ? (
@@ -534,9 +463,9 @@ const App = () => {
                   </Button>
                 </div>
               ) : filteredTasks.length === 0 ? (
-                <EmptyState filter={filter} searchQuery={searchQuery} />
+                <EmptyState filter={filter} searchQuery="" />
               ) : (
-                <div className="task-grid pt-2">
+                <div className="grid gap-4 pt-2">
                   {filteredTasks.map((task) => (
                     <TaskItem
                       key={task.id}
